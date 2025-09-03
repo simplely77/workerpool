@@ -18,7 +18,7 @@
 ## 📦 安装
 
 ```bash
-go get github.com/simplely77/workerpool
+go get github.com/simplely77/workerpool@latest
 ```
 
 ## 🚀 快速开始
