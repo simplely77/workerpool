@@ -3,7 +3,7 @@
 一个高性能、功能丰富的 Go 语言协程池/任务队列框架，支持多队列、优先级调度、动态扩缩容等企业级特性。
 
 [![Go Version](https://img.shields.io/badge/Go-%3E%3D%201.24-blue.svg)](https://golang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-simplely77%2Fworkerpool-blue)](https://github.com/simplely77/workerpool)
 
 ## ✨ 核心特性
 
@@ -34,25 +34,25 @@ import (
     "log"
     "time"
     
-    "workerpool"
+    "github.com/simplely77/workerpool"
 )
 
 func main() {
     // 1. 注册任务处理器
-    wp.RegisterTaskHandler("email", func(ctx context.Context, task *wp.Task) error {
+    workerpool.RegisterTaskHandler("email", func(ctx context.Context, task *workerpool.Task) error {
         fmt.Printf("发送邮件: %s\n", string(task.Payload))
         return nil
     })
     
-    wp.RegisterTaskHandler("sms", func(ctx context.Context, task *wp.Task) error {
+    workerpool.RegisterTaskHandler("sms", func(ctx context.Context, task *workerpool.Task) error {
         fmt.Printf("发送短信: %s\n", string(task.Payload))
         return nil
     })
     
     // 2. 创建 WorkerPool
-    pool := wp.NewWorkerPool(&wp.WorkerPoolConfig{
+    pool := workerpool.NewWorkerPool(&workerpool.WorkerPoolConfig{
         WorkerSize: 10, // 10 个 Worker
-        Logger:     wp.NewStdLogger(),
+        Logger:     workerpool.NewStdLogger(),
     })
     
     // 3. 启动 WorkerPool
@@ -62,8 +62,8 @@ func main() {
     defer pool.Stop()
     
     // 4. 提交任务
-    emailTask := wp.NewTask("email", wp.WithTaskPayload([]byte("欢迎注册！")))
-    smsTask := wp.NewTask("sms", wp.WithTaskPayload([]byte("验证码: 123456")))
+    emailTask := workerpool.NewTask("email", workerpool.WithTaskPayload([]byte("欢迎注册！")))
+    smsTask := workerpool.NewTask("sms", workerpool.WithTaskPayload([]byte("验证码: 123456")))
     
     pool.Submit(context.Background(), emailTask)
     pool.Submit(context.Background(), smsTask)
@@ -77,12 +77,12 @@ func main() {
 
 ```go
 // 创建多个队列，不同优先级
-pool := wp.NewWorkerPool(&wp.WorkerPoolConfig{
+pool := workerpool.NewWorkerPool(&workerpool.WorkerPoolConfig{
     WorkerSize: 5,
-    TaskQueues: map[string]wp.TaskQueue{
-        "high":   wp.NewMemoryTaskQueue(1000),    // 高优先级队列
-        "normal": wp.NewMemoryTaskQueue(2000),    // 普通队列
-        "low":    wp.NewMemoryTaskQueue(500),     // 低优先级队列
+    TaskQueues: map[string]workerpool.TaskQueue{
+        "high":   workerpool.NewMemoryTaskQueue(1000),    // 高优先级队列
+        "normal": workerpool.NewMemoryTaskQueue(2000),    // 普通队列
+        "low":    workerpool.NewMemoryTaskQueue(500),     // 低优先级队列
     },
     TaskQueuePriority: map[string]int{
         "high":   100,  // 高优先级
@@ -92,13 +92,13 @@ pool := wp.NewWorkerPool(&wp.WorkerPoolConfig{
 })
 
 // 提交到不同队列
-urgentTask := wp.NewTask("process", 
-    wp.WithTaskQueue("high"),
-    wp.WithTaskPayload([]byte("紧急任务")))
+urgentTask := workerpool.NewTask("process", 
+    workerpool.WithTaskQueue("high"),
+    workerpool.WithTaskPayload([]byte("紧急任务")))
 
-normalTask := wp.NewTask("process", 
-    wp.WithTaskQueue("normal"),
-    wp.WithTaskPayload([]byte("普通任务")))
+normalTask := workerpool.NewTask("process", 
+    workerpool.WithTaskQueue("normal"),
+    workerpool.WithTaskPayload([]byte("普通任务")))
 ```
 
 ### Redis 队列
@@ -111,9 +111,9 @@ rdb := redis.NewClient(&redis.Options{
     Addr: "localhost:6379",
 })
 
-pool := wp.NewWorkerPool(&wp.WorkerPoolConfig{
-    TaskQueues: map[string]wp.TaskQueue{
-        "default": wp.NewRedisTaskQueue(rdb),
+pool := workerpool.NewWorkerPool(&workerpool.WorkerPoolConfig{
+    TaskQueues: map[string]workerpool.TaskQueue{
+        "default": workerpool.NewRedisTaskQueue(rdb),
     },
 })
 ```
@@ -166,9 +166,9 @@ type WorkerPoolConfig struct {
 
 ```go
 // 创建任务时的可选参数
-task := wp.NewTask("handler_key",
-    wp.WithTaskPayload([]byte("数据")),    // 任务数据
-    wp.WithTaskQueue("high"),              // 指定队列
+task := workerpool.NewTask("handler_key",
+    workerpool.WithTaskPayload([]byte("数据")),    // 任务数据
+    workerpool.WithTaskQueue("high"),              // 指定队列
 )
 
 // 任务还支持超时设置
@@ -199,12 +199,12 @@ type MyCustomQueue struct {
     // 自定义队列实现
 }
 
-func (q *MyCustomQueue) Enqueue(ctx context.Context, task *wp.Task) error {
+func (q *MyCustomQueue) Enqueue(ctx context.Context, task *workerpool.Task) error {
     // 实现入队逻辑
     return nil
 }
 
-func (q *MyCustomQueue) Dequeue(ctx context.Context) (*wp.Task, error) {
+func (q *MyCustomQueue) Dequeue(ctx context.Context) (*workerpool.Task, error) {
     // 实现出队逻辑
     return nil, nil
 }
@@ -229,7 +229,7 @@ func (l *MyLogger) Warn(ctx context.Context, format string, args ...interface{})
 ### 复杂任务处理器
 
 ```go
-wp.RegisterTaskHandler("image_process", func(ctx context.Context, task *wp.Task) error {
+workerpool.RegisterTaskHandler("image_process", func(ctx context.Context, task *workerpool.Task) error {
     // 解析任务数据
     var req ImageProcessRequest
     if err := json.Unmarshal(task.Payload, &req); err != nil {
@@ -257,9 +257,9 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
     user := parseUser(r)
     
     // 异步发送欢迎邮件
-    emailTask := wp.NewTask("welcome_email",
-        wp.WithTaskPayload(user.Email),
-        wp.WithTaskQueue("email"))
+    emailTask := workerpool.NewTask("welcome_email",
+        workerpool.WithTaskPayload(user.Email),
+        workerpool.WithTaskQueue("email"))
     
     h.workerPool.Submit(r.Context(), emailTask)
     
@@ -272,15 +272,15 @@ func (h *Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 ```go
 func ProcessBatch(items []Item) {
-    pool := wp.NewWorkerPool(&wp.WorkerPoolConfig{
+    pool := workerpool.NewWorkerPool(&workerpool.WorkerPoolConfig{
         WorkerSize: 50, // 并发处理 50 个任务
     })
     pool.Run()
     defer pool.Stop()
     
     for _, item := range items {
-        task := wp.NewTask("process_item",
-            wp.WithTaskPayload(item.ToBytes()))
+        task := workerpool.NewTask("process_item",
+            workerpool.WithTaskPayload(item.ToBytes()))
         pool.Submit(context.Background(), task)
     }
 }
@@ -289,14 +289,14 @@ func ProcessBatch(items []Item) {
 ### 定时任务调度
 
 ```go
-func StartScheduler(pool wp.WorkerPool) {
+func StartScheduler(pool workerpool.WorkerPool) {
     ticker := time.NewTicker(5 * time.Minute)
     defer ticker.Stop()
     
     for range ticker.C {
         // 每 5 分钟执行一次清理任务
-        task := wp.NewTask("cleanup", 
-            wp.WithTaskQueue("maintenance"))
+        task := workerpool.NewTask("cleanup", 
+            workerpool.WithTaskQueue("maintenance"))
         pool.Submit(context.Background(), task)
     }
 }
@@ -307,14 +307,14 @@ func StartScheduler(pool wp.WorkerPool) {
 运行基准测试：
 
 ```bash
-go test -bench=. -benchmem
+go test -bench=BenchmarkWorkerPool -benchmem
 ```
 
-典型性能数据（在 8 核 CPU 上）：
+典型性能数据（在 12th Gen Intel Core i3-12100F 上）：
 
 ```
-BenchmarkWorkerPool_Submit-8           	 5000000	       263 ns/op	      64 B/op	       2 allocs/op
-BenchmarkWorkerPool_Submit_FIFOQueue-8 	 2000000	       824 ns/op	      64 B/op	       2 allocs/op
+BenchmarkWorkerPool_Submit-8           	 3853870	       322.7 ns/op	     482 B/op	       5 allocs/op
+BenchmarkWorkerPool_Submit_FIFOQueue-8 	 2543247	       456.6 ns/op	     612 B/op	       8 allocs/op
 ```
 
 ## 🛠️ 依赖
@@ -338,12 +338,9 @@ BenchmarkWorkerPool_Submit_FIFOQueue-8 	 2000000	       824 ns/op	      64 B/op	
 5. **监控队列长度**: 及时发现性能瓶颈
 6. **错误处理**: 任务处理器应妥善处理各种异常情况
 
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
 ## 🔗 相关链接
 
+- [GitHub 仓库](https://github.com/simplely77/workerpool)
 - [Go 并发编程指南](https://golang.org/doc/effective_go.html#concurrency)
 - [任务队列设计模式](https://en.wikipedia.org/wiki/Message_queue)
 - [性能优化技巧](https://dave.cheney.net/high-performance-go-workshop/dotgo-paris.html)
