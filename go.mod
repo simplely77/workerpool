@@ -1,4 +1,4 @@
-module workerpool
+module github.com/simplely77/workerpool
 
 go 1.24.3
 

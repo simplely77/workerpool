@@ -1,0 +1,27 @@
+# 测试目录
+test/
+
+# 编译输出
+*.exe
+*.test
+
+# Go 相关
+*.mod.bak
+*.sum.bak
+
+# IDE 文件
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+*.log
+
+# 临时文件
+*.tmp
+*.temp
